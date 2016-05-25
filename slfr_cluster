@@ -1,0 +1,90 @@
+# created by:
+#   Raymond Burkhlder
+#     rburkholder@quovadis.bm
+#     raymond@burkholder.net
+
+# date:  2016/05/25
+
+# file location:
+#  share/check_mk/checks/slfr_cluster
+# to debug:
+#   cmk -vpn --checks slfr_cluster hostname
+
+# pnp4nagios templates go into share/check_mk/pnp-templates/
+
+# instructions:
+#  https://mathias-kettner.de/checkmk_devel_agentbased.html
+#  https://mathias-kettner.de/checkmk_devel_counters.html
+#  http://mathias-kettner.com/checkmk_devel_newapi.html
+
+# default value (not used)
+slfr_cluster_totalOps_default = (0,400000)
+
+# the inventory function (dummy)
+def inventory_slfr_cluster(info):
+  #print info
+  #for line in info:
+  #  valName = line[0]
+    #if 'totalOps' == valName:
+      #yield valName, "slfr_cluster_totalOps_default"
+  #  yield valName, None
+  yield 'capacity', None
+
+  # the check function (dummy)
+def check_slfr_cluster(item, params, info):
+  #print item, info
+  perfdata = [ ( 'totalOps', int(0) ) ]
+  #debug = ''
+  vals = {}
+  #if 0 != len(info):
+  #  for line in info:
+  #    debug += ' ' + line[0]
+  #    vals[line[0]] = int(line[1])
+  #    totalOps = vals['totalOps']
+  #return 3, 'info: ' + str(len(info)) + ' ' + debug, perfdata
+  if 0 == len(info):
+    perfdata = [ ( 'totalOps', int(0) ) ]
+    return 3, 'info is zero length', perfdata
+  else:
+    for line in info:
+      vals[line[0]] = line[1]
+
+    totalOps = int(vals['totalOps'])
+    totalOpsRate = get_rate( 'slfr_cluster.totalOps', int(time.time()), totalOps )
+    perfdata = [ ( 'totalOps', totalOpsRate ) ]
+
+    perfdata += [ ( 'clusterRecentIOSize', int(vals['clusterRecentIOSize']) ) ]
+    perfdata += [ ( 'currentIOPS', int(vals['currentIOPS']) ) ]
+
+    zeroBlocks = float(vals['zeroBlocks'])
+    nonZeroBlocks = float(vals['nonZeroBlocks'])
+
+    thinProvisioningFactor = ( nonZeroBlocks + zeroBlocks ) / nonZeroBlocks
+    perfdata += [ ( 'thinProvisioningFactor', thinProvisioningFactor ) ]
+
+    uniqueBlocks = float(vals['uniqueBlocks'])
+    uniqueBlocksUsedSpace = float(vals['uniqueBlocksUsedSpace'])
+
+    deDuplicationFactor = nonZeroBlocks / uniqueBlocks
+    perfdata += [ ( 'deDuplicationFactor', deDuplicationFactor ) ]
+
+    compressionFactor = (uniqueBlocks * 4096) / uniqueBlocksUsedSpace
+    perfdata += [ ( 'compressionFactor', compressionFactor ) ]
+
+    efficiencyFactor = thinProvisioningFactor * deDuplicationFactor * compressionFactor
+    perfdata += [ ( 'efficiencyFactor', efficiencyFactor ) ]
+
+    timestamp = vals['timestamp']
+
+    return 0, '%s totalOps: %d, efficiency %.2f, thinProvision: %.2f, dedup: %.2f, compress: %.2f' % (timestamp, totalOpsRate, efficiencyFactor, thinProvisioningFactor, deDuplicationFactor, compressionFactor), perfdata
+    #return 0, 'totalOps: %d, thinProvision: %.2f, dedup: %.2f, compress: %.2f' % (totalOpsRate,thinProvisioningFactor, deDuplicationFactor, compressionFactor), perfdata
+    #return 0, 'totalOps: %d' % totalOpsRate, perfdata
+
+# declare the check to Check_MK
+check_info['slfr_cluster'] = {
+  'check_function':            check_slfr_cluster,
+  'inventory_function':        inventory_slfr_cluster,
+  'service_description':       'SLFR-%s',
+  'has_perfdata':              True,
+}
+
