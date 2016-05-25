@@ -1,0 +1,108 @@
+# created by:
+#   Raymond Burkhlder
+#     rburkholder@quovadis.bm
+#     raymond@burkholder.net
+
+# date:  2016/05/25
+
+# file location:
+#  share/check_mk/checks/slfr_volumes
+# to debug:
+#   cmk -vpn --checks slfr_volumes hostname
+
+# pnp4nagios templates go into share/check_mk/pnp-templates/
+
+# instructions:
+#  https://mathias-kettner.de/checkmk_devel_agentbased.html
+#  https://mathias-kettner.de/checkmk_devel_counters.html
+#  http://mathias-kettner.com/checkmk_devel_newapi.html
+
+# default value
+
+def inventory_slfr_volumes(info):
+  for line in info:
+    valName = line[0]
+    yield valName, None
+
+def check_slfr_volumes(item, params, info):
+  perfdata = []
+  vals = {}
+  #return 3, 'non implemented', perfdata
+
+  if 0 == len(info):
+    return 3, 'info is zero length', perfdata
+  else:
+    for line in info:
+      if item == line[0]:
+        ix = 1 # start to pull out values
+        lenLine = len(line)
+        while ix < lenLine:
+          varName = line[ix]
+          varVal  = line[ix+1]
+          vals[ varName ] = varVal
+          #perfdata += [ ( varName, varVal ) ]
+          ix += 2
+
+        nowTime = int(time.time())
+
+        perfdata += [ ( 'actualIOPS', vals['actualIOPS'] ) ]
+        perfdata += [ ( 'burstIOPSCredit', vals['burstIOPSCredit'] ) ]
+        perfdata += [ ( 'throttle', vals['throttle'] ) ]
+        perfdata += [ ( 'clientQueueDepth', vals['clientQueueDepth'] ) ]
+        perfdata += [ ( 'latencyUSec', vals['latencyUSec'] ) ]
+        perfdata += [ ( 'readLatencyUSec', vals['readLatencyUSec'] ) ]
+        perfdata += [ ( 'writeLatencyUSec', vals['writeLatencyUSec'] ) ]
+        perfdata += [ ( 'volumeUtilization', vals['volumeUtilization'] ) ]
+        perfdata += [ ( 'volumeSize', vals['volumeSize'] ) ]
+
+        readBytesDelta = get_rate( 'slfr_volumes.' + item + '.readBytesDelta', nowTime, int(vals['readBytes'] ) )
+        perfdata += [ ( 'readBytesDelta', readBytesDelta ) ]
+
+        writeBytesDelta = get_rate( 'slfr_volumes.' + item + '.writeBytesDelta', nowTime, int(vals['writeBytes'] ) )
+        perfdata += [ ( 'writeBytesDelta', writeBytesDelta ) ]
+
+        readOpsDelta = get_rate( 'slfr_volumes.' + item + '.readOpsDelta', nowTime, int(vals['readOps'] ) )
+        perfdata += [ ( 'readOpsDelta', readOpsDelta ) ]
+
+        writeOpsDelta = get_rate( 'slfr_volumes.' + item + '.writeOpsDelta', nowTime, int(vals['writeOps'] ) )
+        perfdata += [ ( 'writeOpsDelta', writeOpsDelta ) ]
+
+        unalignedReadsDelta = get_rate( 'slfr_volumes.' + item + '.unalignedReadsDelta', nowTime, int(vals['unalignedReads'] ) )
+        perfdata += [ ( 'unalignedReadsDelta', unalignedReadsDelta ) ]
+
+        unalignedWritesDelta = get_rate( 'slfr_volumes.' + item + '.unalignedWritesDelta', nowTime, int(vals['unalignedWrites'] ) )
+        perfdata += [ ( 'unalignedWritesDelta', unalignedWritesDelta ) ]
+
+        return 0, 'volumeUtilization: %.3f clientQueueDepth: %s actualIOPS: %s latencyUSec: %s' % ( float(vals['volumeUtilization']), vals['clientQueueDepth'], vals['actualIOPS'], vals['latencyUSec'] ), perfdata
+
+  return 3, 'nothing found', perfdata
+
+check_info['slfr_volumes'] = {
+  'check_function':      check_slfr_volumes,
+  'inventory_function':  inventory_slfr_volumes,
+  'service_description': 'SLFR-%s',
+  'has_perfdata':        True
+}
+
+
+#165   print(
+#166       volume['name'] + '-' + str(stats['volumeID'])
+#167     + ' actualIOPS ' + str(stats['actualIOPS'] )
+#168 #    + ' averageIOPSize ' + str(stats['averageIOPSize'] )
+#169     + ' burstIOPSCredit ' + str(stats['burstIOPSCredit'] )
+#170     + ' readBytes ' + str(stats['readBytes'] )
+#171     + ' writeBytes ' + str(stats['writeBytes'] )
+#172     + ' readOps ' + str(stats['readOps'] )
+#173     + ' writeOps ' + str(stats['writeOps'] )
+#174     + ' unalignedReads ' + str(stats['unalignedReads'] )
+#175     + ' unalignedWrites ' + str(stats['unalignedWrites'] )
+#176     + ' throttle ' + str(stats['throttle'] )
+#177     + ' clientQueueDepth ' + str(stats['clientQueueDepth'] )
+#178     + ' zeroBlocks ' + str(stats['zeroBlocks'] )
+#179     + ' nonZeroBlocks ' + str(stats['nonZeroBlocks'] )
+#180     + ' latencyUSec ' + str(stats['latencyUSec'] )
+#181     + ' readLatencyUSec ' + str(stats['readLatencyUSec'] )
+#182     + ' writeLatencyUSec ' + str(stats['writeLatencyUSec'] )
+#183     + ' volumeUtilization ' + str(stats['volumeUtilization'] )
+#184     + ' volumeSize ' + str(stats['volumeSize'] )
+#185     )
