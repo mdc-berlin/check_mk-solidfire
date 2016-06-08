@@ -8,3 +8,6 @@ check_mk scripts to collect cluster and volume information from a solidfire syst
 
 <b>slfr_volumes</b> - check_mk script to process volumes section<br>
 <b>check_mk-slfr_volumes.php</b> - pnp4nagios format
+
+<b>slfr_nodes</b> - check_mk script to process nodes section<br>
+<b>check_mk-slfr_nodes.php</b> - pnp4nagios format
