@@ -199,6 +199,32 @@ for volume in volumes:
     + ' volumeSize ' + str(stats['volumeSize'] )
     )
 
+# ========= node ================
+
+jsonData = json.dumps( { 'method': 'ListActiveNodes', 'params': {}, "id": 1 } )
+response = sendRequest( ip, port, murl, username, password, jsonData, ipType )
+
+print( '<<<slfr_nodes>>>' )
+
+nodes = response['nodes']
+for node in nodes:
+
+  jsonData = json.dumps( { 'method': 'GetNodeStats', 'params': { 'nodeID': node['nodeID'] }, 'id': 1 } )
+  response = sendRequest( ip, port, murl, username, password, jsonData, ipType )
+
+  stats = response['nodeStats']
+  print (
+      node[ 'name' ] + '-' + str(node['nodeID'])
+    + ' cpu ' + str(stats['cpu'])
+    + ' cBytesIn ' + str(stats['cBytesIn'])
+    + ' cBytesOut ' + str(stats['cBytesOut'])
+    + ' mBytesIn ' + str(stats['mBytesIn'])
+    + ' mBytesOut ' + str(stats['mBytesOut'])
+    + ' sBytesIn ' + str(stats['sBytesIn'])
+    + ' sBytesOut ' + str(stats['sBytesOut'])
+    )
+
+
 #capacity = response['clusterCapacity']
 #print(
 #  '0'
