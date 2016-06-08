@@ -1,0 +1,84 @@
+# created by:
+#   Raymond Burkhlder
+#     rburkholder@quovadis.bm
+#     raymond@burkholder.net
+
+# date:  2016/06/07
+
+# file location:
+#  share/check_mk/checks/slfr_nodes
+# to debug:
+#   cmk -vpn --checks slfr_nodes hostname
+
+# pnp4nagios templates go into share/check_mk/pnp-templates/
+
+# instructions:
+#  https://mathias-kettner.de/checkmk_devel_agentbased.html
+#  https://mathias-kettner.de/checkmk_devel_counters.html
+#  http://mathias-kettner.com/checkmk_devel_newapi.html
+
+# default value
+
+def inventory_slfr_nodes(info):
+  for line in info:
+    valName = line[0]
+    yield valName, None
+
+def check_slfr_nodes(item, params, info):
+  perfdata = []
+  vals = {}
+  #return 3, 'non implemented', perfdata
+
+  if 0 == len(info):
+    return 3, 'info is zero length', perfdata
+  else:
+    for line in info:
+      if item == line[0]:
+        ix = 1 # start to pull out values
+        lenLine = len(line)
+        while ix < lenLine:
+          varName = line[ix]
+          varVal  = line[ix+1]
+          vals[ varName ] = varVal
+          #perfdata += [ ( varName, varVal ) ]
+          ix += 2
+
+        nowTime = int(time.time())
+
+        perfdata += [ ( 'cpu', vals['cpu'] ) ]
+        #perfdata += [ ( 'cBytesIn', vals[ 'cBytesIn' ] ) ]
+        #perfdata += [ ( 'cBytesOut', vals[ 'cBytesOut' ] ) ]
+        #perfdata += [ ( 'sBytesIn', vals[ 'sBytesIn' ] ) ]
+        #perfdata += [ ( 'sBytesOut', vals[ 'sBytesOut' ] ) ]
+        #perfdata += [ ( 'mBytesIn', vals[ 'mBytesIn' ] ) ]
+        #perfdata += [ ( 'mBytesOut', vals[ 'mBytesOut' ] ) ]
+
+
+        cBytesInDelta = get_rate( 'slfr_nodes.' + item + '.cBytesInDelta', nowTime, int(vals['cBytesIn'] ) )
+        perfdata += [ ( 'cBytesInDelta', cBytesInDelta ) ]
+
+        cBytesOutDelta = get_rate( 'slfr_nodes.' + item + '.cBytesOutDelta', nowTime, int(vals['cBytesOut'] ) )
+        perfdata += [ ( 'cBytesOutDelta', cBytesOutDelta ) ]
+
+        sBytesInDelta = get_rate( 'slfr_nodes.' + item + '.sBytesInDelta', nowTime, int(vals['sBytesIn'] ) )
+        perfdata += [ ( 'sBytesInDelta', sBytesInDelta ) ]
+
+        sBytesOutDelta = get_rate( 'slfr_nodes.' + item + '.sBytesOutDelta', nowTime, int(vals['sBytesOut'] ) )
+        perfdata += [ ( 'sBytesOutDelta', sBytesOutDelta ) ]
+
+        mBytesInDelta = get_rate( 'slfr_nodes.' + item + '.mBytesInDelta', nowTime, int(vals['mBytesIn'] ) )
+        perfdata += [ ( 'mBytesInDelta', mBytesInDelta ) ]
+
+        mBytesOutDelta = get_rate( 'slfr_nodes.' + item + '.mBytesOutDelta', nowTime, int(vals['mBytesOut'] ) )
+        perfdata += [ ( 'mBytesOutDelta', mBytesOutDelta ) ]
+
+        return 0, 'cpu: %s' % ( vals['cpu'] ), perfdata
+
+  return 3, 'nothing found', perfdata
+
+check_info['slfr_nodes'] = {
+  'check_function':      check_slfr_nodes,
+  'inventory_function':  inventory_slfr_nodes,
+  'service_description': 'SLFR-%s',
+  'has_perfdata':        True
+}
