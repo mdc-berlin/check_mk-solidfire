@@ -7,8 +7,9 @@ The above script requires a caller script:
 ```
 checkmk1:# cat /usr/lib/check_mk_agent/plugins/slfr-cluster.sh
 /usr/bin/python /usr/lib/check_mk_agent/checkSolidFire.py <slfr_cluster_ip> 443 rouser password mvip
-/usr/bin/python /usr/lib/check_mk_agent/checkSolidFire.py <slfr_node1_ip> 443 rouser password node
-/usr/bin/python /usr/lib/check_mk_agent/checkSolidFire.py <slfr_node2_ip> 443 rouser password node
+/usr/bin/python /usr/lib/check_mk_agent/checkSolidFire.py <slfr_node1_ip> 442 rouser password node
+/usr/bin/python /usr/lib/check_mk_agent/checkSolidFire.py <slfr_node2_ip> 442 rouser password node
+...  more nodes ...
 
 ```
 
