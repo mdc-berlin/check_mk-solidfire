@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# created by:
+#   Mathias Decker
+#     github@mathiasdecker.de
+
+# date:  2020/03/10
+
+# file location:
+#  share/check_mk/checks/slfr_drives
+# to debug:
+#   cmk -vpn --checks slfr_drives hostname
+
+# pnp4nagios templates go into share/check_mk/pnp-templates/
+
+# instructions:
+#  https://mathias-kettner.de/checkmk_devel_agentbased.html
+#  https://mathias-kettner.de/checkmk_devel_counters.html
+#  https://mathias-kettner.com/checkmk_devel_newapi.html
+
+# default value
+
+def inventory_slfr_drives(info):
+  for line in info:
+    valName = line[0]
+    #print(valName)
+    yield valName, None
+
+def check_slfr_drives(item, params, info):
+  perfdata = []
+  vals = {}
+  #return 3, 'non implemented', perfdata
+
+  if 0 == len(info):
+    return 3, 'info is zero length', perfdata
+  else:
+    for line in info:
+      if item == line[0]:
+        ix = 1 # start to pull out values
+        lenLine = len(line)
+        while ix < lenLine:
+          varName = line[ix]
+          varVal  = line[ix+1]
+          vals[ varName ] = varVal
+          #perfdata += [ ( varName, varVal ) ]
+          ix += 2
+
+        nowTime = int(time.time())
+
+
+    #print('drive-%s nodeID %s slot %s status %s' % (str(drive['driveID']), str(drive['nodeID']),/ str(drive['slot']), drive['status']))
+        if vals['status'] == 'active':
+            return 0, 'nodeID: %s slot: %s status: %s' % ( vals['nodeID'], vals['slot'], vals['status'])
+        elif vals['status'] == 'available':
+            return 1, 'nodeID: %s slot: %s status: %s(!)' % ( vals['nodeID'], vals['slot'], vals['status'])
+        else:
+            return 2, 'nodeID: %s slot: %s status: %s(!!)' % ( vals['nodeID'], vals['slot'], vals['status'])
+
+  return 3, 'nothing found', perfdata
+
+check_info['slfr_drives'] = {
+  'check_function':      check_slfr_drives,
+  'inventory_function':  inventory_slfr_drives,
+  'service_description': 'SLFR-%s',
+  'has_perfdata':        True
+}
