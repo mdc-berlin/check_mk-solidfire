@@ -1,21 +1,21 @@
 #!/usr/bin/env python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
 # author: Joe McManus joe.mcmanus@solidfire.com
 # file: checkClusterApi.py
-# version: 1.7 2013/05/22
+# version: 1.8 2020/04/10
 # use: Query clusters and nodes for nagios info, or stand-alone command line
-# coding: utf-8
 
 # modified by: Raymond Burkholder
 #   rburkholder@quovadis.bm
 #   raymond@burkholder.net
+# modified by: Mathias Decker
+#   github@mathiasdecker.de
 
-# date: 2016/05/25
+# date: 2020/04/10
 
-# place file in /usr/lib/check_mk_agent
-
-# the following is used in the plugins directory:
-#   host:/usr/lib/check_mk_agent# cat plugins/slfr-cluster.sh
-#   /usr/bin/python /usr/lib/check_mk_agent/SolidFireAgentCluster.py ipaddress 443 acctname password mvip
+# place this file in ~/local/share/check_mk/agents/special
+# and define at 'Individual program call instead of agent access"
+# example: ~/local/share/check_mk/agents/special/SolidFireAgentCluster.py $HOSTADDRESS$ 443 username password mvip
 
 # change the variable murl further down to set the appropriate solidfire api value
 
@@ -30,8 +30,9 @@ import socket
 import re
 import textwrap
 import time
+import ssl
 
-version="1.7 2013/05/22"
+version="1.8 2020/04/10"
 
 #This is a nagios thing, nagionic you might say.
 STATE_OK=0
@@ -41,6 +42,10 @@ STATE_UNKNOWN=3
 STATE_DEPENDENT=4
 exitStatus=STATE_OK
 
+
+print("<<<check_mk>>>")
+print("Version: %s" % version)
+print("AgentOS: ElementOS")
 
 checkDiskUse=1          #Generate Alerts on disk access
 
@@ -71,7 +76,7 @@ def sendRequest(ip, port, murl, username, password, jsonData, ipType):
         request.add_header("Content-Type","application/json-rpc")
         request.add_header("Authorization","Basic " + authKey)
         try:
-                response= urllib2.urlopen(request, timeout=20)
+                response= urllib2.urlopen(request, timeout=20, context=ssl._create_unverified_context())
                 #Debug info if needed
                 #print response.info().headers
                 #print response.read()
@@ -161,6 +166,17 @@ print( 'uniqueBlocks' + ' ' + str(capacity['uniqueBlocks']) )
 print( 'uniqueBlocksUsedSpace' + ' ' + str(capacity['uniqueBlocksUsedSpace']) )
 
 print( 'timestamp' + ' ' + capacity['timestamp'] )
+
+# ========= drives ================
+
+jsonData = json.dumps( { "method": "ListDrives", "params": {}, "id": 9 } )
+response = sendRequest( ip, port, murl, username, password, jsonData, ipType )
+
+print( '<<<slfr_drives>>>' )
+drives = response[ 'drives' ]
+for drive in drives:
+    print('drive-%s nodeID %s slot %s status %s' % (str(drive['driveID']), str(drive['nodeID']), str(drive['slot']), drive['status']))
+
 
 # ========= volume ================
 
